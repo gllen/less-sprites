@@ -16,7 +16,7 @@ function Sprites() {
 	this.readArgs();
 }
 
-Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, lessPath) {
+Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, lessPath, extraURI) {
 	var readDir = false;
 	if (sourceDir !== false) {
 		this.sourceDir = sourceDir;
@@ -36,7 +36,7 @@ Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, less
 
 	this.destPath = path.resolve(destPath);
 	this.lessPath = path.resolve(lessPath);
-
+	this.extraURI = extraURI;
 	this.files = [];
 	this.spriteFile = im();
 	this.spriteFile.out('-background', 'none');
@@ -99,15 +99,15 @@ Sprites.prototype.processFile = function(fileName, callback) {
 
 Sprites.prototype.writeStyles = function() {
 	var relPath = path.relative(this.sourceDir, path.dirname(this.destPath));
-	var spriteFile = relPath + '/' + path.basename(this.destPath);
+	var spriteFile = relPath + '/' + path.basename(this.destPath) + this.extraURI;
 	var content = '';
 	var x = 0;
 	var y = 0;
 
 	for (var i = 0, l = this.files.length; i < l; i++) {
 		content += util.format(
-			'.sprite("%s", @_spriteDir) {\n\tbackground-image: url("@{_spriteDir}%s");\n\tbackground-position: %dpx %dpx;\n}\n',
-			this.files[i].name, spriteFile, x, y
+			'.sprite("%s", @_spriteDir) {\n\tbackground-color:transparent;\n\tbackground-image: url("@{_spriteDir}%s");\n\tbackground-position: %dpx %dpx;\n\twidth: %dpx;\n\theight: %dpx;\n\tdisplay:inline-block;\n\ttext-indent: -6000em;\n\t-webkit-box-sizing: border-box;\n\t-moz-box-sizing: border-box;\n\tbox-sizing: border-box;\n}\n',
+			this.files[i].name, spriteFile, x, y, this.files[i].size.width, this.files[i].size.height
 		);
 		if (this.specs.appendRight) {
 			x -= this.files[i].size.width;
@@ -147,6 +147,11 @@ Sprites.prototype.readArgs = function() {
 		specs['dir'] = '.';
 	}
 
+	// for adding a cache buster string to the final sprite url
+	if (!specs['extra_uri']) {
+		specs['extra_uri'] = '';
+	}
+
  	// default directory is same as the json
 	if (!specs['sprite']) {
 		specs['sprite'] = path.basename(specsFile, '.json') + '.png';
@@ -175,7 +180,8 @@ Sprites.prototype.readArgs = function() {
 		path.resolve(specsFile, '..', specs['dir']),
 		specs['files'],
 		specs['sprite'],
-		specs['less']
+		specs['less'],
+		specs['extra_uri']
 	);
 };
 
