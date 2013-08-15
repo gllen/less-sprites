@@ -137,19 +137,20 @@ Sprites.prototype.readArgs = function() {
 	}
 
 	var specsFile = argv[0];
-	if (!fs.existsSync(specsFile)) {
-		console.log('Error: Specs file "' + specsFile + '" does not exist.');
-		process.exit();
-	}
+	if (fs.existsSync(specsFile)) {
+		var specs = require(specsFile);
+	} else {
+    var specs = {};
+  }
 	specsFile =  path.resolve(specsFile);
-	var specs = require(specsFile);
+	
 	if (!specs['dir']) {
 		specs['dir'] = '.';
 	}
 
 	// for adding a cache buster string to the final sprite url
 	if (!specs['extra_uri']) {
-		specs['extra_uri'] = '';
+		specs['extra_uri'] = '?' + Math.random().toString(36).substring(7);
 	}
 
  	// default directory is same as the json
@@ -170,7 +171,7 @@ Sprites.prototype.readArgs = function() {
 	}
 
 	if (!specs['files']) {
-		throw new Error('Missing "files" property.');
+    specs['files'] = fs.readdirSync(path.dirname(specsFile) + '/');
 	}
 	if (specs['direction']) {
 		this.specs.appendRight = specs['direction'] == 'right';
