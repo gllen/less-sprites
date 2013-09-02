@@ -16,7 +16,7 @@ function Sprites() {
 	this.readArgs();
 }
 
-Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, lessPath) {
+Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, lessPath, extraURI) {
 	var readDir = false;
 	if (sourceDir !== false) {
 		this.sourceDir = sourceDir;
@@ -36,6 +36,7 @@ Sprites.prototype.createSprite = function(sourceDir, sourceFiles, destPath, less
 
 	this.destPath = path.resolve(destPath);
 	this.lessPath = path.resolve(lessPath);
+	this.extraURI = extraURI;
 	this.files = [];
 	this.spriteFile = im();
 	this.spriteFile.out('-background', 'none');
@@ -98,8 +99,7 @@ Sprites.prototype.processFile = function(fileName, callback) {
 
 Sprites.prototype.writeStyles = function() {
 	var relPath = path.relative(this.sourceDir, path.dirname(this.destPath));
-	var spriteFile = relPath + path.basename(this.destPath);
-  
+	var spriteFile = relPath + '/' + path.basename(this.destPath) + this.extraURI;
 	var content = '';
 	var x = 0;
 	var y = 0;
@@ -148,9 +148,14 @@ Sprites.prototype.readArgs = function() {
 		specs['dir'] = '.';
 	}
 
+	// for adding a cache buster string to the final sprite url
+	if (!specs['extra_uri']) {
+		specs['extra_uri'] = '?' + Math.random().toString(36).substring(7);
+	}
+
  	// default directory is same as the json
 	if (!specs['sprite']) {
-		specs['sprite'] = path.basename(specsFile, '.json') + '.' + Math.random().toString(36).substring(7) + '.png';
+		specs['sprite'] = path.basename(specsFile, '.json') + '.png';
 	}
 	// relative to the specsFile directory.
 	if (specs['sprite'][0] != '/') {
@@ -176,7 +181,8 @@ Sprites.prototype.readArgs = function() {
 		path.resolve(specsFile, '..', specs['dir']),
 		specs['files'],
 		specs['sprite'],
-		specs['less']
+		specs['less'],
+		specs['extra_uri']
 	);
 };
 
